@@ -1,0 +1,54 @@
+{
+  "name": "pdf-pravka",
+  "version": "1.0.0",
+  "description": "Редактор PDF в браузере: правка текста в content stream, надписи, подписи и печати, поиск с заменой, страницы и конвертер Word → PDF. Без сервера.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "author": "Buffy (Freebuff coding agent)",
+  "keywords": [
+    "pdf",
+    "pdf-editor",
+    "react",
+    "vite",
+    "typescript",
+    "browser",
+    "offline",
+    "docx"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build && node scripts/postbuild.mjs",
+    "start": "node scripts/serve.mjs",
+    "start:open": "node scripts/serve.mjs --open",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.worker.json",
+    "verify": "npm run typecheck && npm run verify:pdf",
+    "verify:pdf": "node scripts/verify-pdf.mjs",
+    "verify:stream": "bun scripts/verify-stream.ts"
+  },
+  "dependencies": {
+    "@cantoo/pdf-lib": "^2.11.1",
+    "@pdf-lib/fontkit": "^1.1.1",
+    "docx-preview": "^0.4.1",
+    "pdfjs-dist": "^6.5.438",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.64.0",
+    "@cloudflare/workers-types": "^5.20261019.0",
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/bun": "^1.3.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.1.0",
+    "miniflare": "^5.20261110.0-beta",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^5.9.0",
+    "vite": "^8.3.0",
+    "wrangler": "^4.151.0"
+  }
+}
