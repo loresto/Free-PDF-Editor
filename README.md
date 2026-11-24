@@ -67,14 +67,41 @@ bun run build         # сборка в dist/
 bun run start         # локальный сервер собранного приложения
 ```
 
-## Публикация
+## Публикация на GitHub Pages
 
-Сборка — статический сайт (Cloudflare Workers + assets, `deploy.json`): база, авторизация и
-секреты не нужны. Достаточно загрузить содержимое `dist/client` на любой статический хостинг
-(GitHub Pages, Netlify, Cloudflare Pages) или развернуть Worker из `dist/pdf_editor`.
+В репозитории лежит готовый workflow `.github/workflows/deploy.yml`: при каждом пуше в `main`
+он собирает приложение и публикует его на GitHub Pages.
 
-Для GitHub Pages: `bun run build` и опубликуйте `dist/client` (в `vite.config.ts` при необходимости
-задайте `base`).
+1. Создайте репозиторий на GitHub и запушьте ветку `main`.
+2. В репозитории откройте **Settings → Pages → Build and deployment → Source** и выберите
+   **GitHub Actions** (один раз).
+3. Следующий пуш в `main` опубликует сайт по адресу `https://<пользователь>.github.io/<репозиторий>/`.
+
+Как это устроено:
+
+- `vite.config.ts` берёт `base` из переменной `VITE_BASE`; workflow выставляет
+  `VITE_BASE=/${{ github.event.repository.name }}/`, поэтому имя репозитория хардкодить не нужно;
+- для Pages-сборки Cloudflare-плагин отключается, а результат кладётся в `dist/pages`
+  (локальная сборка по-прежнему пишет `dist/client` + `dist/worker` для Cloudflare);
+- workflow добавляет `404.html` (SPA-fallback) и `.nojekyll`.
+
+Локальная проверка сборки с подпапкой (Git Bash на Windows — с `MSYS_NO_PATHCONV=1`, иначе
+путь `/repo/` будет преобразован в файловый):
+
+```sh
+MSYS_NO_PATHCONV=1 VITE_BASE=/repo/ bun run build   # macOS/Linux — без префикса
+grep -oE '(src|href)="/repo/[^"]+"' dist/pages/index.html
+ls dist/pages/assets dist/pages/fonts
+```
+
+В `index.html` пути должны начинаться с `/repo/assets/…`, а папки `assets` и `fonts` —
+существовать. CSS-ссылки на шрифты Vite также переписывает на `/repo/fonts/…`.
+
+### Другие хостинги
+
+Сборка — статический сайт: содержимое `dist/client` можно загрузить на Netlify, Cloudflare Pages
+или любой другой статический хостинг (тогда `base` остаётся `/`). Для Cloudflare Workers
+разворачивается `dist/pdf_editor` по манифесту `deploy.json`.
 
 ---
 

@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.tmp-pages/
 .wrangler/
 .dev-server.log
 .cloud-attachments/
