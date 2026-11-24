@@ -39,7 +39,10 @@ jobs:
           cp dist/pages/index.html dist/pages/404.html
           touch dist/pages/.nojekyll
 
+      # enablement: страница Pages включается сама, права pages: write уже выданы выше.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
