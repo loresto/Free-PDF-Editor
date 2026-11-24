@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useT, type MessageKey } from '../i18n'
 import type { PDFDocumentProxy } from 'pdfjs-dist'
 import { DropZone } from '../components/DropZone'
 import { PageView } from '../components/PageView'
@@ -55,55 +56,56 @@ function EmptyPanel({
   onToggleRulers: () => void
   onToggleSnap: () => void
 }) {
-  const shortcuts: [string, string][] = [
-    ['Клик по тексту', 'править строку'],
-    ['Пробел + тянуть', 'двигать страницу'],
-    ['Ctrl+Z / Ctrl+Shift+Z', 'отменить / вернуть'],
-    ['Стрелки', 'сдвиг на 1 pt (Shift — 10 pt)'],
-    ['Ctrl+D', 'дублировать блок'],
-    ['Ctrl+C / Ctrl+V', 'копировать / вставить'],
-    ['Delete', 'удалить блок'],
-    ['+ Текст', 'новый блок на странице'],
-    ['Изображение', 'PNG-подпись или печать'],
-    ['✏ Рисовать', 'линия или подпись от руки'],
-    ['Word → PDF', '.docx в PDF через печать'],
-    ['Esc', 'выйти из правки'],
+  const t = useT()
+  const shortcuts: [MessageKey, MessageKey][] = [
+    ['panel.keyClick', 'panel.shortcut.edit'],
+    ['panel.keySpace', 'panel.shortcut.pan'],
+    ['panel.keyUndo', 'panel.shortcut.undo'],
+    ['panel.keyArrows', 'panel.shortcut.arrows'],
+    ['panel.keyDup', 'panel.shortcut.dup'],
+    ['panel.keyCopy', 'panel.shortcut.copy'],
+    ['panel.keyDelete', 'panel.shortcut.del'],
+    ['panel.keyAdd', 'panel.shortcut.add'],
+    ['panel.keyImage', 'panel.shortcut.image'],
+    ['panel.keyDraw', 'panel.shortcut.draw'],
+    ['panel.keyWord', 'panel.shortcut.word'],
+    ['panel.keyEsc', 'panel.shortcut.esc'],
   ]
   return (
     <div className="px-4 py-4 text-sm">
-      <h2 className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">Настройки</h2>
+      <h2 className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">
+        {t('panel.settings')}
+      </h2>
       <p className="mt-2 rounded-lg bg-zinc-50 px-2 py-1.5 text-[11px] leading-relaxed text-zinc-500">
-        {editCount > 0
-          ? 'Выберите строку или блок на странице — здесь появятся кегль, шрифт, цвета, отступы и слои.'
-          : 'Кликните по любой строке документа, чтобы заменить её текст, или нажмите «+ Текст», чтобы добавить новый блок.'}
+        {editCount > 0 ? t('panel.hintHas') : t('panel.hintEmpty')}
       </p>
 
-      <h3 className="mt-4 text-[11px] font-medium text-zinc-500">Вид</h3>
+      <h3 className="mt-4 text-[11px] font-medium text-zinc-500">{t('panel.view')}</h3>
       <div className="mt-1 grid grid-cols-2 gap-1">
         <button
           type="button"
           className={`tool ${rulers ? 'tool-active' : ''}`}
           onClick={onToggleRulers}
         >
-          Линейка
+          {t('toolbar.rulers')}
         </button>
         <button
           type="button"
           className={`tool ${snap ? 'tool-active' : ''}`}
           onClick={onToggleSnap}
         >
-          Привязка
+          {t('toolbar.snap')}
         </button>
       </div>
 
-      <h3 className="mt-4 text-[11px] font-medium text-zinc-500">Горячие клавиши</h3>
+      <h3 className="mt-4 text-[11px] font-medium text-zinc-500">{t('panel.shortcuts')}</h3>
       <ul className="mt-1 space-y-1">
         {shortcuts.map(([keys, action]) => (
           <li key={keys} className="flex justify-between gap-2 text-[11px]">
             <span className="shrink-0 rounded border border-zinc-200 bg-zinc-50 px-1 text-zinc-600">
-              {keys}
+              {t(keys)}
             </span>
-            <span className="text-right text-zinc-400">{action}</span>
+            <span className="text-right text-zinc-400">{t(action)}</span>
           </li>
         ))}
       </ul>
@@ -149,13 +151,20 @@ function PageFrame({
   )
 }
 
-const PROTECTION_TEXT: Record<Protection, string> = {
-  none: 'Защита не обнаружена',
-  owner: 'Только ограничения владельца: печать и копирование запрещены, пароль на открытие не нужен',
-  user: 'Нужен пароль на открытие',
-}
+const TIP_KEYS: MessageKey[] = [
+  'panel.tip1',
+  'panel.tip2',
+  'panel.tip3',
+  'panel.tip4',
+  'panel.tip5',
+  'panel.tip6',
+  'panel.tip7',
+  'panel.tip8',
+  'panel.tip9',
+]
 
 export function App() {
+  const t = useT()
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [edits, setEdits] = useState<TextEdit[]>([])
   const editsRef = useRef<TextEdit[]>([])
@@ -377,8 +386,8 @@ export function App() {
       } catch (caught) {
         setError(
           caught instanceof Error
-            ? `Не удалось открыть файл: ${caught.message}`
-            : 'Не удалось открыть файл.',
+            ? t('error.open', { message: caught.message })
+            : t('error.openGeneric'),
         )
       } finally {
         setBusy(false)
@@ -619,7 +628,7 @@ export function App() {
     for (const key of STYLE_KEYS) Object.assign(style, { [key]: source[key] })
     styleRef.current = structuredClone(style)
     setHasStyle(true)
-    setStatus('Стиль скопирован — выберите другой блок и нажмите «Применить стиль»')
+    setStatus(t('status.styleCopied'))
   }
 
   function pasteStyle(id: string) {
@@ -657,14 +666,14 @@ export function App() {
   async function addImageFile(file: File) {
     if (!loaded) return
     if (!/^image\/(png|jpeg)$/i.test(file.type)) {
-      setError('Поддерживаются PNG и JPEG — например, подпись или печать на прозрачном фоне.')
+      setError(t('error.imageType'))
       return
     }
     try {
       const dataUrl = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader()
         reader.onload = () => resolve(String(reader.result))
-        reader.onerror = () => reject(new Error('Не удалось прочитать файл.'))
+        reader.onerror = () => reject(new Error(t('error.imageRead')))
         reader.readAsDataURL(file)
       })
       const natural = await new Promise<{ width: number; height: number }>((resolve) => {
@@ -698,9 +707,9 @@ export function App() {
       setSelectedImageId(image.id)
       setSelectedId(null)
       setSelectedStrokeId(null)
-      setStatus('Изображение добавлено — перетащите его в нужное место')
+      setStatus(t('status.imageAdded'))
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Не удалось добавить изображение.')
+      setError(caught instanceof Error ? caught.message : t('error.addImage'))
     }
   }
 
@@ -757,7 +766,7 @@ export function App() {
     if (index < 0 || target < 0 || target >= list.length) return
     ;[list[index], list[target]] = [list[target], list[index]]
     setPageOrder(list)
-    setStatus(`Страница ${page} перемещена: новый порядок применится при скачивании`)
+    setStatus(t('status.pageMoved', { page }))
   }
 
   function togglePage(page: number) {
@@ -778,9 +787,9 @@ export function App() {
         order,
       })
       savePdf(output, outputName(loaded.name, '-edited'))
-      setStatus('Файл сохранён с изменениями')
+      setStatus(t('status.saved'))
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Не удалось собрать PDF.')
+      setError(caught instanceof Error ? caught.message : t('error.export'))
     } finally {
       setBusy(false)
     }
@@ -793,9 +802,9 @@ export function App() {
     try {
       const output = await saveWithoutProtection(loaded.bytes, loaded.password)
       savePdf(output, outputName(loaded.name, '-unlocked'))
-      setStatus('Защита снята, сохранена копия без ограничений')
+      setStatus(t('status.unlocked'))
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Не удалось снять защиту.')
+      setError(caught instanceof Error ? caught.message : t('error.unprotect'))
     } finally {
       setBusy(false)
     }
@@ -952,11 +961,11 @@ export function App() {
       count += 1
     }
     if (!count) {
-      setStatus('Совпадений для замены нет на просмотренных страницах')
+      setStatus(t('status.noMatches'))
       return
     }
     commit(next)
-    setStatus(`Заменено строк: ${count}`)
+    setStatus(t('status.replaced', { count }))
   }
 
   return (
@@ -1015,15 +1024,15 @@ export function App() {
         <div className="flex min-h-0 flex-1">
           <aside className="hidden w-52 shrink-0 flex-col overflow-y-auto border-r border-zinc-200 bg-white px-3 py-4 md:flex">
             <h2 className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase">
-              Документ
+              {t('panel.document')}
             </h2>
             <dl className="mt-2 space-y-1 text-[11px] text-zinc-500">
               <div className="flex justify-between gap-2">
-                <dt>Страниц</dt>
+                <dt>{t('panel.pagesCount')}</dt>
                 <dd className="font-medium text-zinc-800">{loaded.pages.length}</dd>
               </div>
               <div className="flex justify-between gap-2">
-                <dt>Правок</dt>
+                <dt>{t('panel.editsCount')}</dt>
                 <dd className="font-medium text-zinc-800">{editCount}</dd>
               </div>
             </dl>
@@ -1034,28 +1043,22 @@ export function App() {
                   : 'bg-amber-50 text-amber-700'
               }`}
             >
-              {PROTECTION_TEXT[loaded.protection]}
+              {t(`panel.protection.${loaded.protection}`)}
             </p>
 
             <details className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1.5 text-[11px] text-zinc-600">
               <summary className="cursor-pointer font-medium text-zinc-700 select-none">
-                Подсказки
+                {t('panel.tips')}
               </summary>
               <ul className="mt-2 space-y-1.5 leading-relaxed">
-                <li>• Клик по строке — правка текста. Esc — выйти, клик мимо — снять выделение.</li>
-                <li>• Клик по картинке или линии открывает их свойства справа.</li>
-                <li>• «+ Текст» — новый блок, «Изображение» — PNG-подпись или печать, «✏ Рисовать» — линия от руки.</li>
-                <li>• При перетаскивании блок прилипает к строкам и блокам; кнопка «Привязка» отключает это.</li>
-                <li>• Стрелки двигают на 1 pt, Shift+стрелки — на 10 pt, Delete удаляет.</li>
-                <li>• Ctrl+Z / Ctrl+Shift+Z — отмена и повтор, Ctrl+D — дублировать, Ctrl+C / Ctrl+V — копировать и вставить.</li>
-                <li>• «Копировать стиль» → «Применить стиль» переносит шрифт, цвет и интервалы на другой блок.</li>
-                <li>• Найденная строка заменяется во всём документе кнопкой «Заменить всё» (страницы должны быть просмотрены).</li>
-                <li>• «Скачать PDF» собирает файл локально; для .docx используется диалог печати с принтером «Сохранить как PDF».</li>
+                {TIP_KEYS.map((key) => (
+                  <li key={key}>{t(key)}</li>
+                ))}
               </ul>
             </details>
 
             <h2 className="mt-5 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase">
-              Страницы
+              {t('panel.pages')}
             </h2>
             <ul className="mt-2 space-y-1">
               {pageOrder.map((page, position) => {
@@ -1078,19 +1081,19 @@ export function App() {
                           block: 'start',
                         })
                       }
-                      title="Перейти к странице"
+                      title={t('panel.goToPage')}
                     >
                       {removed ? '—' : position + 1}
                     </button>
                     <span className="flex-1 truncate text-[10px] text-zinc-400">
-                      {removed ? 'удалена' : `стр. ${page}`}
+                      {removed ? t('panel.pageRemoved') : t('common.pageShort', { page })}
                     </span>
                     <button
                       type="button"
                       className="rounded px-1 hover:bg-zinc-100"
                       onClick={() => movePage(page, -1)}
                       disabled={position === 0}
-                      title="Переместить выше"
+                      title={t('panel.moveUp')}
                     >
                       ↑
                     </button>
@@ -1099,7 +1102,7 @@ export function App() {
                       className="rounded px-1 hover:bg-zinc-100"
                       onClick={() => movePage(page, 1)}
                       disabled={position === pageOrder.length - 1}
-                      title="Переместить ниже"
+                      title={t('panel.moveDown')}
                     >
                       ↓
                     </button>
@@ -1107,7 +1110,7 @@ export function App() {
                       type="button"
                       className="rounded px-1 hover:bg-zinc-100"
                       onClick={() => togglePage(page)}
-                      title={removed ? 'Вернуть страницу' : 'Удалить страницу из файла'}
+                      title={removed ? t('panel.restorePage') : t('panel.removePage')}
                     >
                       {removed ? '↺' : '✕'}
                     </button>
@@ -1117,19 +1120,19 @@ export function App() {
             </ul>
 
             <h2 className="mt-5 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase">
-              Поиск и замена
+              {t('panel.search')}
             </h2>
             <div className="mt-2 space-y-1">
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Найти текст"
+                placeholder={t('panel.find')}
                 className="w-full rounded-md border border-zinc-300 px-2 py-1 text-[11px] outline-none focus:border-indigo-500"
               />
               <input
                 value={replacement}
                 onChange={(event) => setReplacement(event.target.value)}
-                placeholder="Заменить на"
+                placeholder={t('panel.replaceWith')}
                 className="w-full rounded-md border border-zinc-300 px-2 py-1 text-[11px] outline-none focus:border-indigo-500"
               />
               <button
@@ -1137,14 +1140,15 @@ export function App() {
                 className="tool w-full"
                 onClick={replaceAll}
                 disabled={!query.trim()}
-                title="Заменить во всех просмотренных строках"
+                title={t('panel.replaceAllTitle')}
               >
-                Заменить всё
+                {t('panel.replaceAll')}
               </button>
               {query.trim() && (
                 <p className="text-[10px] text-zinc-400">
-                  Найдено: {searchResults.length}
-                  {searchResults.length >= 80 ? ' (первые 80)' : ''}
+                  {searchResults.length >= 80
+                    ? t('panel.foundLimit', { count: searchResults.length })
+                    : t('panel.found', { count: searchResults.length })}
                 </p>
               )}
               <ul className="max-h-40 space-y-0.5 overflow-y-auto">
@@ -1161,7 +1165,7 @@ export function App() {
                         })
                       }
                     >
-                      стр. {line.page} · {line.text}
+                      {t('common.pageShort', { page: line.page })} · {line.text}
                     </button>
                   </li>
                 ))}
@@ -1169,11 +1173,11 @@ export function App() {
             </div>
 
             <h2 className="mt-5 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase">
-              Правки
+              {t('panel.editsHeading')}
             </h2>
             {editCount === 0 ? (
               <p className="mt-2 text-[11px] leading-relaxed text-zinc-400">
-                Кликните по тексту на странице, чтобы изменить его.
+                {t('panel.editsEmpty')}
               </p>
             ) : (
               <ul className="mt-2 space-y-1">
@@ -1196,7 +1200,8 @@ export function App() {
                       }`}
                       title={edit.text}
                     >
-                      стр. {edit.page} · {edit.text.trim() || 'пусто'}
+                      {t('common.pageShort', { page: edit.page })} ·{' '}
+                      {edit.text.trim() || t('panel.editsEmptyItem')}
                     </button>
                   </li>
                 ))}
@@ -1209,14 +1214,12 @@ export function App() {
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-zinc-200 bg-white/80 px-4 py-2 text-[11px] text-zinc-500">
                 <span>
                   {addMode
-                    ? 'Кликните по странице, чтобы поставить новый текстовый блок'
+                    ? t('main.hintAdd')
                     : drawMode
-                      ? 'Ведите мышью по странице, чтобы нарисовать линию или подпись'
-                      : 'Кликните по строке, чтобы править текст. Esc — выйти. Свойства — справа.'}
+                      ? t('main.hintDraw')
+                      : t('main.hintEdit')}
                 </span>
-                <span className="text-zinc-400">
-                  Блоки прилипают к краям и базовым линиям соседних строк · картинку тяните
-                  мышью, уголком — размер</span>
+                <span className="text-zinc-400">{t('main.snapHint')}</span>
               </div>
               <div className="flex flex-col items-center gap-6">
                 {pageOrder
@@ -1293,13 +1296,9 @@ export function App() {
                 })}
               </div>
               <p className="mt-6 max-w-2xl pb-4 text-center text-[10px] leading-relaxed text-zinc-400">
-                Работает офлайн: файл читается и записывается в вашем браузере. Снятие
-                защиты допустимо только для документов, к которым у вас есть права.
-                Заменённая строка вырезается из текстового потока страницы — и в превью,
-                и в файле, поэтому фон и линии таблицы не повреждаются. Если строку снять
-                не удалось, используется подложка, и такой текст остаётся доступным поиску.
+                {t('main.footer')}
                 <br />
-                PDF Правка · MIT · автор Buffy (Freebuff coding agent)
+                {t('main.footerCredit')}
               </p>
             </div>
           </main>

@@ -1,3 +1,4 @@
+import { useT } from '../i18n'
 import { hexToRgb, rgbToHex, type ImageEdit, type StrokeEdit } from '../pdf/model'
 
 type ImageProps = {
@@ -9,20 +10,23 @@ type ImageProps = {
 
 /** Properties of an inserted picture (signature, stamp, logo). */
 export function ImagePanel({ image, onChange, onDuplicate, onRemove }: ImageProps) {
+  const t = useT()
   const ratio = image.height / Math.max(1, image.width)
   return (
     <div className="px-4 py-4 text-sm">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">
-          Изображение
+          {t('image.heading')}
         </h2>
         <div className="flex items-center gap-1">
-          <span className="text-[11px] text-zinc-400">стр. {image.page}</span>
+          <span className="text-[11px] text-zinc-400">
+            {t('common.pageShort', { page: image.page })}
+          </span>
           <button
             type="button"
             className={`tool px-1.5 ${image.locked ? 'tool-active' : ''}`}
             onClick={() => onChange({ locked: !image.locked })}
-            title={image.locked ? 'Разблокировать' : 'Заблокировать'}
+            title={image.locked ? t('text.unlockTitle') : t('text.lockTitle')}
           >
             {image.locked ? '🔒' : '🔓'}
           </button>
@@ -38,7 +42,7 @@ export function ImagePanel({ image, onChange, onDuplicate, onRemove }: ImageProp
         <span className="truncate text-xs text-zinc-600">{image.label}</span>
       </div>
 
-      <Field label="Размер (ширина / высота), pt">
+      <Field label={t('image.size')}>
         <div className="grid grid-cols-2 gap-1">
           <input
             type="number"
@@ -64,7 +68,7 @@ export function ImagePanel({ image, onChange, onDuplicate, onRemove }: ImageProp
         </div>
       </Field>
 
-      <Field label="Положение, pt">
+      <Field label={t('image.position')}>
         <div className="grid grid-cols-2 gap-1">
           {(['x', 'y'] as const).map((key) => (
             <label key={key} className="flex items-center gap-1 text-[11px] text-zinc-500">
@@ -81,13 +85,13 @@ export function ImagePanel({ image, onChange, onDuplicate, onRemove }: ImageProp
         </div>
       </Field>
 
-      <Field label={`Поворот · ${Math.round(image.rotation || 0)}°`}>
+      <Field label={t('image.rotation', { value: Math.round(image.rotation || 0) })}>
         <div className="flex items-center gap-1">
           <button
             type="button"
             className="tool w-8 shrink-0"
             onClick={() => onChange({ rotation: (image.rotation || 0) + 90 })}
-            title="Повернуть на 90° против часовой"
+            title={t('image.rotateCCW')}
           >
             ⟲
           </button>
@@ -104,7 +108,7 @@ export function ImagePanel({ image, onChange, onDuplicate, onRemove }: ImageProp
             type="button"
             className="tool w-8 shrink-0"
             onClick={() => onChange({ rotation: (image.rotation || 0) - 90 })}
-            title="Повернуть на 90° по часовой"
+            title={t('image.rotateCW')}
           >
             ⟳
           </button>
@@ -114,7 +118,7 @@ export function ImagePanel({ image, onChange, onDuplicate, onRemove }: ImageProp
             type="button"
             className="tool"
             onClick={() => onChange({ rotation: 0 })}
-            title="Без поворота"
+            title={t('image.rotateNone')}
           >
             0°
           </button>
@@ -122,7 +126,7 @@ export function ImagePanel({ image, onChange, onDuplicate, onRemove }: ImageProp
             type="button"
             className="tool"
             onClick={() => onChange({ rotation: -15 })}
-            title="Повернуть на 15° по часовой"
+            title={t('image.rotateCW15')}
           >
             −15°
           </button>
@@ -130,14 +134,14 @@ export function ImagePanel({ image, onChange, onDuplicate, onRemove }: ImageProp
             type="button"
             className="tool"
             onClick={() => onChange({ rotation: 15 })}
-            title="Повернуть на 15° против часовой"
+            title={t('image.rotateCCW15')}
           >
             +15°
           </button>
         </div>
       </Field>
 
-      <Field label={`Прозрачность · ${Math.round(image.opacity * 100)}%`}>
+      <Field label={t('image.opacity', { value: Math.round(image.opacity * 100) })}>
         <input
           type="range"
           min={0.1}
@@ -151,18 +155,14 @@ export function ImagePanel({ image, onChange, onDuplicate, onRemove }: ImageProp
 
       <div className="mt-5 space-y-1 border-t border-zinc-200 pt-4">
         <button type="button" className="tool w-full justify-start" onClick={onDuplicate}>
-          Дублировать
+          {t('image.duplicate')}
         </button>
         <button type="button" className="tool w-full justify-start text-red-600" onClick={onRemove}>
-          Удалить изображение
+          {t('image.remove')}
         </button>
       </div>
 
-      <p className="mt-4 text-[11px] leading-relaxed text-zinc-400">
-        Подпись и печать лучше готовить в PNG с прозрачным фоном: тогда фон документа
-        остаётся виден. Тяните картинку мышью, уголком — размер, ползунком — поворот
-        вокруг центра.
-      </p>
+      <p className="mt-4 text-[11px] leading-relaxed text-zinc-400">{t('image.note')}</p>
     </div>
   )
 }
@@ -175,16 +175,19 @@ type StrokeProps = {
 
 /** Properties of a freehand line. */
 export function StrokePanel({ stroke, onChange, onRemove }: StrokeProps) {
+  const t = useT()
   return (
     <div className="px-4 py-4 text-sm">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">
-          Линия от руки
+          {t('stroke.heading')}
         </h2>
-        <span className="text-[11px] text-zinc-400">стр. {stroke.page}</span>
+        <span className="text-[11px] text-zinc-400">
+          {t('common.pageShort', { page: stroke.page })}
+        </span>
       </div>
 
-      <Field label="Цвет">
+      <Field label={t('stroke.color')}>
         <div className="flex items-center gap-2">
           <input
             type="color"
@@ -196,7 +199,7 @@ export function StrokePanel({ stroke, onChange, onRemove }: StrokeProps) {
         </div>
       </Field>
 
-      <Field label="Толщина, pt">
+      <Field label={t('stroke.width')}>
         <input
           type="range"
           min={0.3}
@@ -208,7 +211,7 @@ export function StrokePanel({ stroke, onChange, onRemove }: StrokeProps) {
         />
       </Field>
 
-      <Field label={`Прозрачность · ${Math.round(stroke.opacity * 100)}%`}>
+      <Field label={t('stroke.opacity', { value: Math.round(stroke.opacity * 100) })}>
         <input
           type="range"
           min={0.1}
@@ -222,13 +225,12 @@ export function StrokePanel({ stroke, onChange, onRemove }: StrokeProps) {
 
       <div className="mt-5 space-y-1 border-t border-zinc-200 pt-4">
         <button type="button" className="tool w-full justify-start text-red-600" onClick={onRemove}>
-          Удалить линию
+          {t('stroke.remove')}
         </button>
       </div>
 
       <p className="mt-4 text-[11px] leading-relaxed text-zinc-400">
-        {stroke.points.length} точек. Чтобы нарисовать ещё, включите «Рисовать» в панели
-        сверху.
+        {t('stroke.points', { count: stroke.points.length })}
       </p>
     </div>
   )

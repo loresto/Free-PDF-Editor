@@ -5,7 +5,7 @@ dist/
 .dev-server.log
 .cloud-attachments/
 .freebuff/
-screenshots/
+/screenshots/
 .env
 .env.*
 .dev.vars

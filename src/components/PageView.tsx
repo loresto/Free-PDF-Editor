@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist'
+import { useT } from '../i18n'
 import { runsFromItems } from '../pdf/pdfjs'
 import { freeSpaceRight, inkBox, renderPage, sampleCover, type Box } from '../pdf/render'
 import { displayText, wrapText, canvasMeasure } from '../pdf/model'
@@ -118,6 +119,7 @@ export function PageView({
   onResizeImage,
   onStroke,
 }: Props) {
+  const t = useT()
   const holderRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const pageRef = useRef<PDFPageProxy | null>(null)
@@ -566,7 +568,7 @@ export function PageView({
         )}
         {!rendered && (
           <div className="absolute inset-0 grid place-items-center text-xs text-zinc-400">
-            Страница {info.index}…
+            {t('page.loading', { page: info.index })}
           </div>
         )}
 
@@ -577,7 +579,7 @@ export function PageView({
               <button
                 key={run.id}
                 type="button"
-                title={addMode ? undefined : 'Изменить этот текст'}
+                title={addMode ? undefined : t('page.editText')}
                 onClick={(event) => {
                   if (addMode) return
                   event.stopPropagation()
@@ -625,7 +627,7 @@ export function PageView({
                     onPointerDown={(event) => startImageResize(event, image)}
                     onClick={(event) => event.stopPropagation()}
                     className="absolute -bottom-1.5 -right-1.5 h-3 w-3 cursor-nwse-resize rounded-sm border border-white bg-indigo-500"
-                    title="Изменить размер"
+                    title={t('page.resize')}
                   />
                 )}
               </div>
@@ -803,21 +805,21 @@ export function PageView({
                       <div
                         onPointerDown={(event) => startDrag(event, edit)}
                         className="absolute -left-6 -top-1 cursor-move rounded bg-indigo-500 px-1 py-0.5 text-[10px] leading-none text-white select-none"
-                        title="Перетащить"
+                        title={t('page.drag')}
                       >
                         ⠿
                       </div>
                       <div
                         onPointerDown={(event) => startResize(event, edit)}
                         className="absolute -right-1.5 top-0 h-full w-2.5 cursor-ew-resize rounded bg-indigo-500/30 hover:bg-indigo-500/60"
-                        title="Изменить ширину"
+                        title={t('page.resizeWidth')}
                       />
                     </>
                   )}
                   {selected && edit.locked && (
                     <div
                       className="absolute -left-6 -top-1 rounded bg-zinc-700 px-1 py-0.5 text-[10px] leading-none text-white select-none"
-                      title="Блок заблокирован"
+                      title={t('page.locked')}
                     >
                       🔒
                     </div>

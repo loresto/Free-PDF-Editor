@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useT } from '../i18n'
 
 export function PasswordDialog({
   incorrect,
@@ -9,6 +10,7 @@ export function PasswordDialog({
   onSubmit: (password: string) => void
   onCancel: () => void
 }) {
+  const t = useT()
   const [value, setValue] = useState('')
 
   return (
@@ -20,14 +22,11 @@ export function PasswordDialog({
         }}
         className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"
       >
-        <h2 className="text-lg font-semibold text-zinc-900">Файл защищён паролем</h2>
-        <p className="mt-2 text-xs leading-relaxed text-zinc-500">
-          Введите пароль, который открывает этот документ. Он используется только в этом
-          браузере и не передаётся на сервер.
-        </p>
+        <h2 className="text-lg font-semibold text-zinc-900">{t('pwd.title')}</h2>
+        <p className="mt-2 text-xs leading-relaxed text-zinc-500">{t('pwd.text')}</p>
         {incorrect && (
           <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">
-            Пароль не подошёл. Попробуйте ещё раз.
+            {t('pwd.incorrect')}
           </p>
         )}
         <input
@@ -36,7 +35,7 @@ export function PasswordDialog({
           value={value}
           onChange={(event) => setValue(event.target.value)}
           className="mt-4 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
-          placeholder="Пароль"
+          placeholder={t('pwd.placeholder')}
         />
         <div className="mt-4 flex justify-end gap-2">
           <button
@@ -44,10 +43,10 @@ export function PasswordDialog({
             className="rounded-lg px-3 py-2 text-xs text-zinc-600 hover:bg-zinc-100"
             onClick={onCancel}
           >
-            Отмена
+            {t('common.cancel')}
           </button>
           <button className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-medium text-white">
-            Открыть
+            {t('pwd.open')}
           </button>
         </div>
       </form>

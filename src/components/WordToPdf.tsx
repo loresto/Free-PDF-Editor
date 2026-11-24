@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { renderAsync } from 'docx-preview'
+import { useT } from '../i18n'
 
 type Props = {
   open: boolean
@@ -14,6 +15,7 @@ type Props = {
  * sent to the system print dialog, where «Сохранить как PDF» writes the file.
  */
 export function WordToPdf({ open, file, onClose }: Props) {
+  const t = useT()
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [name, setName] = useState('')
@@ -50,8 +52,8 @@ export function WordToPdf({ open, file, onClose }: Props) {
         if (!cancelled) {
           setError(
             caught instanceof Error
-              ? `Не удалось прочитать документ: ${caught.message}`
-              : 'Не удалось прочитать документ.',
+              ? t('word.error', { message: caught.message })
+              : t('word.errorGeneric'),
           )
         }
       } finally {
@@ -61,7 +63,7 @@ export function WordToPdf({ open, file, onClose }: Props) {
     return () => {
       cancelled = true
     }
-  }, [open, pending])
+  }, [open, pending, t])
 
   useEffect(() => {
     if (!open) return
@@ -78,50 +80,41 @@ export function WordToPdf({ open, file, onClose }: Props) {
     <div className="word-overlay fixed inset-0 z-50 flex flex-col bg-zinc-900/60 p-3 backdrop-blur-sm">
       <div className="word-shell mx-auto flex h-full w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
         <header className="word-chrome flex flex-wrap items-center gap-2 border-b border-zinc-200 px-4 py-2">
-          <h2 className="text-sm font-semibold text-zinc-900">Word → PDF</h2>
+          <h2 className="text-sm font-semibold text-zinc-900">{t('toolbar.word')}</h2>
           <span className="max-w-[240px] truncate text-xs text-zinc-500">
-            {name || 'выберите файл .docx'}
+            {name || t('word.noFile')}
           </span>
           <div className="ml-auto flex items-center gap-1">
             <button className="tool" onClick={() => inputRef.current?.click()}>
-              Открыть .docx
+              {t('word.open')}
             </button>
             <button
               className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
               onClick={() => window.print()}
               disabled={busy || !name}
-              title="Откроется системный диалог печати — выберите «Сохранить как PDF»"
+              title={t('word.saveTitle')}
             >
-              Сохранить как PDF
+              {t('word.save')}
             </button>
             <button className="tool" onClick={onClose}>
-              Закрыть
+              {t('toolbar.close')}
             </button>
           </div>
         </header>
 
         <div className="word-note border-b border-amber-200 bg-amber-50 px-4 py-2 text-[11px] leading-relaxed text-amber-800">
-          Кнопка «Сохранить как PDF» открывает системный диалог печати — выберите в списке
-          принтеров <b>«Сохранить как PDF»</b> (в Windows также «Microsoft Print to PDF»). Так
-          получается настоящий PDF с текстовым слоем и страницами A4. Файл никуда не
-          отправляется, печать идёт из этой вкладки.
+          {t('word.note')}
         </div>
 
         <div className="word-scroll flex-1 overflow-auto bg-zinc-100 p-4">
-          {busy && <p className="mb-2 text-center text-xs text-zinc-500">Разбираю документ…</p>}
+          {busy && <p className="mb-2 text-center text-xs text-zinc-500">{t('word.busy')}</p>}
           {error && (
             <p className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>
           )}
           {!name && !busy && (
             <div className="mx-auto mt-10 max-w-xl rounded-2xl border-2 border-dashed border-zinc-300 bg-white px-6 py-10 text-center">
-              <p className="text-sm font-medium text-zinc-800">
-                Перетащите .docx сюда или нажмите «Открыть .docx»
-              </p>
-              <p className="mt-2 text-xs leading-relaxed text-zinc-500">
-                Документ раскладывается по страницам прямо в браузере, файл никуда не
-                отправляется. Затем «Сохранить как PDF» откроет диалог печати — в нём
-                выберите принтер «Сохранить как PDF».
-              </p>
+              <p className="text-sm font-medium text-zinc-800">{t('word.emptyTitle')}</p>
+              <p className="mt-2 text-xs leading-relaxed text-zinc-500">{t('word.emptyText')}</p>
             </div>
           )}
           <div

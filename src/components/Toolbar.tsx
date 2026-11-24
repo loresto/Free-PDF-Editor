@@ -1,5 +1,7 @@
 import { useRef } from 'react'
+import { useT } from '../i18n'
 import type { Protection } from '../pdf/decrypt'
+import { LanguageSelect } from './LanguageSelect'
 
 type Props = {
   fileName: string | null
@@ -30,40 +32,39 @@ type Props = {
   onClose: () => void
 }
 
-const PROTECTION_LABEL: Record<Protection, string> = {
-  none: 'без защиты',
-  owner: 'ограничения владельца',
-  user: 'пароль на открытие',
-}
-
 export function Toolbar(props: Props) {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const imageRef = useRef<HTMLInputElement>(null)
+  const t = useT()
   const hasFile = Boolean(props.fileName)
+  const protection = t(`toolbar.protection.${props.protection}`)
 
   return (
     <header className="z-20 flex flex-wrap items-center gap-2 border-b border-zinc-200 bg-white/90 px-3 py-2 backdrop-blur">
-      <div className="mr-2 flex items-baseline gap-2">
-        <span className="text-sm font-semibold tracking-tight text-zinc-900">PDF Правка</span>
+      <div className="mr-2 flex shrink-0 items-baseline gap-2">
+        <span className="whitespace-nowrap text-sm font-semibold tracking-tight text-zinc-900">
+          {t('brand')}
+        </span>
         {hasFile && (
           <span className="max-w-[220px] truncate text-xs text-zinc-500" title={props.fileName ?? ''}>
-            {props.fileName} · {props.pageCount} стр. · {PROTECTION_LABEL[props.protection]}
+            {t('toolbar.fileMeta', {
+              name: props.fileName ?? '',
+              count: props.pageCount,
+              protection,
+            })}
           </span>
         )}
       </div>
 
-      <div className="flex items-center gap-1">
-        <button className="tool" onClick={() => inputRef.current?.click()} disabled={props.busy}>
-          Открыть
-        </button>
-        <button className="tool" onClick={props.onWord} title="Перевести документ Word (.docx) в PDF">
-          Word → PDF
+      <div className="flex shrink-0 items-center gap-1">
+        <OpenButton busy={props.busy} onOpen={props.onOpen} />
+        <button className="tool" onClick={props.onWord} title={t('toolbar.wordTitle')}>
+          {t('toolbar.word')}
         </button>
         {hasFile && (
           <button className="tool" onClick={props.onClose}>
-            Закрыть
+            {t('toolbar.close')}
           </button>
         )}
+        <LanguageSelectSlot />
       </div>
 
       {hasFile && (
@@ -71,10 +72,10 @@ export function Toolbar(props: Props) {
           <Divider />
           <div className="flex items-center gap-1">
             <button className="tool" onClick={props.onUndo} disabled={!props.canUndo}>
-              Отменить
+              {t('toolbar.undo')}
             </button>
             <button className="tool" onClick={props.onRedo} disabled={!props.canRedo}>
-              Повторить
+              {t('toolbar.redo')}
             </button>
           </div>
 
@@ -99,42 +100,40 @@ export function Toolbar(props: Props) {
             className={`tool ${props.addMode ? 'tool-active' : ''}`}
             onClick={props.onToggleAdd}
           >
-            + Текст
+            {t('toolbar.addText')}
           </button>
           <button
             className={`tool ${props.rulers ? 'tool-active' : ''}`}
             onClick={props.onToggleRulers}
-            title="Показать или скрыть линейки"
+            title={t('toolbar.rulersTitle')}
           >
-            Линейка
+            {t('toolbar.rulers')}
           </button>
           <button
             className={`tool ${props.snap ? 'tool-active' : ''}`}
             onClick={props.onToggleSnap}
-            title="Прилипание к соседнему тексту при перетаскивании"
+            title={t('toolbar.snapTitle')}
           >
-            Привязка
+            {t('toolbar.snap')}
           </button>
           <button
             className={`tool ${props.drawMode ? 'tool-active' : ''}`}
             onClick={props.onToggleDraw}
-            title="Рисовать от руки: подпись, пометки, линии"
+            title={t('toolbar.drawTitle')}
           >
-            ✏ Рисовать
+            {t('toolbar.draw')}
           </button>
-          <button className="tool" onClick={() => imageRef.current?.click()}>
-            Изображение
-          </button>
+          <ImageButton onImageFile={props.onImageFile} />
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-2">
             {props.editCount > 0 && (
               <button className="tool" onClick={props.onReset}>
-                Сбросить правки
+                {t('toolbar.reset')}
               </button>
             )}
             {props.protection !== 'none' && (
               <button className="tool" onClick={props.onRemoveProtection} disabled={props.busy}>
-                Снять защиту
+                {t('toolbar.unlock')}
               </button>
             )}
             <button
@@ -142,12 +141,31 @@ export function Toolbar(props: Props) {
               onClick={props.onDownload}
               disabled={props.busy}
             >
-              {props.busy ? 'Сохраняю…' : 'Скачать PDF'}
+              {props.busy ? t('toolbar.saving') : t('toolbar.download')}
             </button>
           </div>
         </>
       )}
+    </header>
+  )
+}
 
+function LanguageSelectSlot() {
+  return (
+    <div className="ml-1">
+      <LanguageSelect compact />
+    </div>
+  )
+}
+
+function OpenButton({ busy, onOpen }: { busy: boolean; onOpen: (file: File) => void }) {
+  const t = useT()
+  const inputRef = useRef<HTMLInputElement>(null)
+  return (
+    <>
+      <button className="tool" onClick={() => inputRef.current?.click()} disabled={busy}>
+        {t('toolbar.open')}
+      </button>
       <input
         ref={inputRef}
         type="file"
@@ -155,10 +173,22 @@ export function Toolbar(props: Props) {
         className="hidden"
         onChange={(event) => {
           const file = event.target.files?.[0]
-          if (file) props.onOpen(file)
+          if (file) onOpen(file)
           event.target.value = ''
         }}
       />
+    </>
+  )
+}
+
+function ImageButton({ onImageFile }: { onImageFile: (file: File) => void }) {
+  const t = useT()
+  const imageRef = useRef<HTMLInputElement>(null)
+  return (
+    <>
+      <button className="tool" onClick={() => imageRef.current?.click()}>
+        {t('toolbar.image')}
+      </button>
       <input
         ref={imageRef}
         type="file"
@@ -166,11 +196,11 @@ export function Toolbar(props: Props) {
         className="hidden"
         onChange={(event) => {
           const file = event.target.files?.[0]
-          if (file) props.onImageFile(file)
+          if (file) onImageFile(file)
           event.target.value = ''
         }}
       />
-    </header>
+    </>
   )
 }
 
